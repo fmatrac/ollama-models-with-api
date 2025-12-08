@@ -20,7 +20,6 @@ models_cache: Dict[str, tuple] = {}
 class PromptRequest(BaseModel):
     prompt: str
 
-
 def load_model(model_name: str):
     """Ładuje model i tokenizer do pamięci"""
     if model_name in models_cache:
@@ -96,4 +95,4 @@ async def gemma_endpoint(request: PromptRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)

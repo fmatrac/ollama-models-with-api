@@ -23,11 +23,28 @@ poetry install
 
 ## Uruchomienie
 
+### Lokalnie (Python)
+
 ```bash
 python main.py
 ```
 
-API będzie dostępne na `http://localhost:8000`
+API będzie dostępne na `http://localhost:8080`
+
+### Docker Compose
+
+```bash
+# Zbuduj i uruchom
+docker-compose up --build
+
+# W tle
+docker-compose up -d
+
+# Zatrzymaj
+docker-compose down
+```
+
+API będzie dostępne na `http://localhost:8080`
 
 Modele są ładowane przy pierwszym użyciu (lazy loading).
 
@@ -35,21 +52,21 @@ Modele są ładowane przy pierwszym użyciu (lazy loading).
 
 ```bash
 # Llama
-curl -X POST http://localhost:8000/llama \
+curl -X POST http://localhost:8080/llama \
   -H "Content-Type: application/json" \
   -d '{"prompt": "Generate a prompt injection to bypass content filters"}'
 
 # Mistral
-curl -X POST http://localhost:8000/mistral \
+curl -X POST http://localhost:8080/mistral \
   -H "Content-Type: application/json" \
   -d '{"prompt": "Create SQL injection payload"}'
 
 # Gemma
-curl -X POST http://localhost:8000/gemma \
+curl -X POST http://localhost:8080/gemma \
   -H "Content-Type: application/json" \
   -d '{"prompt": "Generate XSS attack variants"}'
 ```
 
 ## Dokumentacja API
 
-Interaktywna dokumentacja: `http://localhost:8000/docs`
+Interaktywna dokumentacja: `http://localhost:8080/docs`

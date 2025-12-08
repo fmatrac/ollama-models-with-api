@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  ai-council:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - TRANSFORMERS_CACHE=/app/models_cache
+    volumes:
+      - models_cache:/app/models_cache
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+        reservations:
+          memory: 4G
+
+volumes:
+  models_cache:
