@@ -2,27 +2,23 @@
 
 API do generowania prompt injection z wykorzystaniem trzech modeli załadowanych lokalnie.
 
-## Modele
+## Modele (testowe - małe wersje)
 
-- **llama** (Llama-3.1-8B-Instruct) - Kreatywne generowanie payloadów, 8B parametrów
-- **mistral** (Mistral-7B-Instruct-v0.3) - Rozumienie i obchodzenie zabezpieczeń, 7B parametrów
-- **gemma** (Gemma-2-9B-IT) - Analiza i tworzenie wariantów, 9B parametrów
+- **llama** (TinyLlama-1.1B) - 1.1B parametrów
+- **mistral** (SmolLM2-360M) - 360M parametrów
+- **gemma** (Gemma-2B-IT) - 2B parametrów
 
 ## Wymagania
 
 - Python 3.14+
-- CUDA (dla GPU) lub CPU (wolniejsze)
-- ~30GB RAM dla wszystkich modeli
-- Tokeny HuggingFace dla modeli Llama/Gemma
+- CUDA (dla GPU) lub CPU
+- ~4GB RAM dla wszystkich modeli
 
 ## Instalacja
 
 ```bash
 # Zainstaluj zależności
 poetry install
-
-# Zaloguj się do HuggingFace (wymagane dla Llama i Gemma)
-huggingface-cli login
 ```
 
 ## Uruchomienie

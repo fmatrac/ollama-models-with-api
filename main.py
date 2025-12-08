@@ -6,11 +6,11 @@ from typing import Dict
 
 app = FastAPI(title="AI Council - Prompt Injection Generator")
 
-# Definicja modeli HuggingFace - dobre w generowaniu prompt injection
+# Definicja modeli HuggingFace - małe modele do testów
 MODEL_CONFIGS = {
-    "llama": "meta-llama/Llama-3.1-8B-Instruct",
-    "mistral": "mistralai/Mistral-7B-Instruct-v0.3",
-    "gemma": "google/gemma-2-9b-it"
+    "llama": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",  # 1.1B - bardzo szybki
+    "mistral": "HuggingFaceTB/SmolLM2-360M-Instruct",  # 360M - ultra lekki
+    "gemma": "google/gemma-2b-it"  # 2B - dobry balans
 }
 
 # Cache dla załadowanych modeli
