@@ -1,70 +1,96 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import httpx
-import os
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+from typing import Dict
 
 app = FastAPI(title="AI Council - Prompt Injection Generator")
 
-# Konfiguracja Ollama
-OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-
-# Definicja modeli - dobre w generowaniu prompt injection
-MODELS = {
-    "llama": "llama3.1:8b",      # 8B parametrów - balans między szybkością a jakością
-    "mistral": "mistral:7b",     # 7B parametrów - doskonały do adversarial prompts
-    "gemma": "gemma2:9b"         # 9B parametrów - najlepszy w analizie zabezpieczeń
+# Definicja modeli HuggingFace - dobre w generowaniu prompt injection
+MODEL_CONFIGS = {
+    "llama": "meta-llama/Llama-3.1-8B-Instruct",
+    "mistral": "mistralai/Mistral-7B-Instruct-v0.3",
+    "gemma": "google/gemma-2-9b-it"
 }
+
+# Cache dla załadowanych modeli
+models_cache: Dict[str, tuple] = {}
 
 
 class PromptRequest(BaseModel):
     prompt: str
 
 
-async def query_ollama(model: str, prompt: str) -> str:
-    """Wysyła zapytanie do Ollama i zwraca odpowiedź"""
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        try:
-            response = await client.post(
-                f"{OLLAMA_BASE_URL}/api/generate",
-                json={
-                    "model": model,
-                    "prompt": prompt,
-                    "stream": False
-                }
+def load_model(model_name: str):
+    """Ładuje model i tokenizer do pamięci"""
+    if model_name in models_cache:
+        return models_cache[model_name]
+    
+    model_id = MODEL_CONFIGS[model_name]
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        torch_dtype=torch.float16,
+        device_map="auto",
+        low_cpu_mem_usage=True
+    )
+    models_cache[model_name] = (model, tokenizer)
+    return model, tokenizer
+
+
+async def generate_response(model_name: str, prompt: str) -> str:
+    """Generuje odpowiedź z modelu"""
+    try:
+        model, tokenizer = load_model(model_name)
+        
+        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+        
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs,
+                max_new_tokens=512,
+                temperature=0.7,
+                top_p=0.9,
+                do_sample=True
             )
-            response.raise_for_status()
-            return response.json()["response"]
-        except httpx.HTTPError as e:
-            raise HTTPException(status_code=500, detail=f"Ollama error: {str(e)}")
+        
+        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        # Usuń prompt z odpowiedzi
+        response = response[len(prompt):].strip()
+        
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Model error: {str(e)}")
 
 
 @app.get("/")
 async def root():
     return {
         "message": "AI Council - Prompt Injection Generator",
-        "models": list(MODELS.keys()),
-        "endpoints": [f"/{model}" for model in MODELS.keys()]
+        "models": list(MODEL_CONFIGS.keys()),
+        "endpoints": [f"/{model}" for model in MODEL_CONFIGS.keys()],
+        "loaded_models": list(models_cache.keys())
     }
 
 
 @app.post("/llama")
 async def llama_endpoint(request: PromptRequest):
     """Llama 3.1 - doskonały w kreatywnym generowaniu payloadów"""
-    response = await query_ollama(MODELS["llama"], request.prompt)
+    response = await generate_response("llama", request.prompt)
     return response
 
 
 @app.post("/mistral")
 async def mistral_endpoint(request: PromptRequest):
     """Mistral - świetny w rozumieniu i obchodzeniu zabezpieczeń"""
-    response = await query_ollama(MODELS["mistral"], request.prompt)
+    response = await generate_response("mistral", request.prompt)
     return response
 
 
 @app.post("/gemma")
 async def gemma_endpoint(request: PromptRequest):
     """Gemma 2 - dobry w analizie i tworzeniu wariantów"""
-    response = await query_ollama(MODELS["gemma"], request.prompt)
+    response = await generate_response("gemma", request.prompt)
     return response
 
 
