@@ -3,8 +3,13 @@ from pydantic import BaseModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 from typing import Dict
+import os
 
 app = FastAPI(title="AI Council - Prompt Injection Generator")
+
+# Katalog dla cache modeli
+MODELS_CACHE_DIR = os.getenv("TRANSFORMERS_CACHE", "./models_cache")
+os.makedirs(MODELS_CACHE_DIR, exist_ok=True)
 
 # Definicja modeli HuggingFace - małe modele do testów
 MODEL_CONFIGS = {
@@ -13,7 +18,7 @@ MODEL_CONFIGS = {
     "gemma": "google/gemma-2b-it"  # 2B - dobry balans
 }
 
-# Cache dla załadowanych modeli
+# Cache dla załadowanych modeli w pamięci
 models_cache: Dict[str, tuple] = {}
 
 
@@ -21,19 +26,31 @@ class PromptRequest(BaseModel):
     prompt: str
 
 def load_model(model_name: str):
-    """Ładuje model i tokenizer do pamięci"""
+    """Ładuje model i tokenizer do pamięci - z dysku jeśli dostępny"""
     if model_name in models_cache:
+        print(f"Model {model_name} już w pamięci")
         return models_cache[model_name]
     
     model_id = MODEL_CONFIGS[model_name]
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    print(f"Ładuję model {model_name} z cache/HuggingFace...")
+    
+    # Tokenizer z lokalnego cache
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_id,
+        cache_dir=MODELS_CACHE_DIR
+    )
+    
+    # Model z lokalnego cache
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
+        cache_dir=MODELS_CACHE_DIR,
         torch_dtype=torch.float16,
         device_map="auto",
         low_cpu_mem_usage=True
     )
+    
     models_cache[model_name] = (model, tokenizer)
+    print(f"Model {model_name} załadowany pomyślnie")
     return model, tokenizer
 
 
@@ -68,6 +85,24 @@ async def root():
         "message": "AI Council - Prompt Injection Generator",
         "models": list(MODEL_CONFIGS.keys()),
         "endpoints": [f"/{model}" for model in MODEL_CONFIGS.keys()],
+        "loaded_models": list(models_cache.keys()),
+        "cache_dir": MODELS_CACHE_DIR
+    }
+
+
+@app.post("/preload")
+async def preload_models():
+    """Wstępnie ładuje wszystkie modele do pamięci i zapisuje na dysku"""
+    results = {}
+    for model_name in MODEL_CONFIGS.keys():
+        try:
+            load_model(model_name)
+            results[model_name] = "loaded"
+        except Exception as e:
+            results[model_name] = f"error: {str(e)}"
+    return {
+        "status": "completed",
+        "results": results,
         "loaded_models": list(models_cache.keys())
     }
 
