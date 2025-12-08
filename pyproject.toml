@@ -6,6 +6,10 @@ authors = [
     {name = "Antoni Zgajewski",email = "antek004@gmail.com"}
 ]
 readme = "README.md"
+<<<<<<< HEAD
+=======
+requires-python = ">=3.10"
+>>>>>>> 0680e6d923cab9269d0ae2175ac599c80de8b7c5
 dependencies = [
     "python (>=3.8,<4.0)",
     "fastapi (>=0.124.0,<0.125.0)",
