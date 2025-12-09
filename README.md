@@ -1,72 +1,14 @@
-# AI Council - Prompt Injection Generator
+# Project description
+### First part
+This project will be made of 2 parts - one containing the UI, and a small backend with
+ - endpoints handling POST, GET to a simple database containing prompt history
+ - an endpoint which will handle the logic behind creating a prompt and then sending requests to the second part of the project with LLMs running on jetson nano, then returning answers
 
-API do generowania prompt injection z wykorzystaniem trzech modeli załadowanych lokalnie.
+### Second part
+The second part will be purely focused on LLMs, it will only contain endpoints which will return the response from the requested LLM.
 
-## Modele (testowe - małe wersje)
-
-- **llama** (TinyLlama-1.1B) - 1.1B parametrów
-- **mistral** (SmolLM2-360M) - 360M parametrów
-- **gemma** (Gemma-2B-IT) - 2B parametrów
-
-## Wymagania
-
-- Python 3.14+
-- CUDA (dla GPU) lub CPU
-- ~4GB RAM dla wszystkich modeli
-
-## Instalacja
-
-```bash
-# Zainstaluj zależności
-poetry install
-```
-
-## Uruchomienie
-
-### Lokalnie (Python)
-
-```bash
-python main.py
-```
-
-API będzie dostępne na `http://localhost:8080`
-
-### Docker Compose
-
-```bash
-# Zbuduj i uruchom
-docker-compose up --build
-
-# W tle
-docker-compose up -d
-
-# Zatrzymaj
-docker-compose down
-```
-
-API będzie dostępne na `http://localhost:8080`
-
-Modele są ładowane przy pierwszym użyciu (lazy loading).
-
-## Przykłady użycia
-
-```bash
-# Llama
-curl -X POST http://localhost:8080/llama \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Generate a prompt injection to bypass content filters"}'
-
-# Mistral
-curl -X POST http://localhost:8080/mistral \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Create SQL injection payload"}'
-
-# Gemma
-curl -X POST http://localhost:8080/gemma \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Generate XSS attack variants"}'
-```
-
-## Dokumentacja API
-
-Interaktywna dokumentacja: `http://localhost:8080/docs`
+# End requirements
+ - Ability to communicate with 3 models which are trying to jailbrake the 4th model
+ - Ability to grade models' responses based on if the jailbrake worked
+ - Ability to see past jailbrake attempts from a database
+ - Nice UI to see the whole process
